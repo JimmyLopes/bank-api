@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*
 class AccountController(private val repository: AccountRepository) {
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     fun create(@RequestBody account: Account): Account = repository.save(account)
 
     @GetMapping
@@ -34,6 +35,7 @@ class AccountController(private val repository: AccountRepository) {
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long) : ResponseEntity<Void> =
         repository.findById(id).map {
-            ResponseEntity<Void>(HttpStatus.OK)
+            repository.delete(it)
+            ResponseEntity<Void>(HttpStatus.NO_CONTENT)
         }.orElse(ResponseEntity.notFound().build())
 }
