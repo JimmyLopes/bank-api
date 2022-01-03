@@ -1,4 +1,4 @@
-package com.bank
+package com.bank.controller
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
