@@ -3,6 +3,7 @@ package com.bank.service
 import com.bank.model.Account
 import com.bank.repository.AccountRepository
 import org.springframework.stereotype.Service
+import org.springframework.util.Assert
 import java.lang.RuntimeException
 import java.util.Optional
 
@@ -10,6 +11,15 @@ import java.util.Optional
 class AccountServiceImpl(private val repository: AccountRepository) : AccountService {
 
     override fun create(account: Account): Account {
+        Assert.hasLength(account.name, "[nome] nao pode estar em branco!")
+        Assert.isTrue(account.name.length >= 5, "[nome] deve ter no minimo 5 caracteres!")
+
+        Assert.hasLength(account.document, "[document] nao pode estar em branco!")
+        Assert.isTrue(account.document.length == 11, "[document] deve ter 11 caracteres!")
+
+        Assert.hasLength(account.phone, "[phone] nao pode estar em branco!")
+        Assert.isTrue(account.phone.length == 9, "[phone] deve ter 9 caracteres!")
+
         return repository.save(account)
     }
 
@@ -22,7 +32,7 @@ class AccountServiceImpl(private val repository: AccountRepository) : AccountSer
     }
 
     override fun update(id: Long, account: Account): Optional<Account> {
-        var optional = getById(id)
+        val optional = getById(id)
         if (optional.isEmpty) Optional.empty<Account>()
 
         return optional.map {
