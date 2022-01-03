@@ -1,11 +1,14 @@
 package com.bank
 
+import com.bank.model.Account
+import com.bank.repository.AccountRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -22,7 +25,7 @@ class AccountControllerTest {
 
     @Test
     fun `test find all`() {
-        accountRepository.save(Account(name = "Test", document = "5646848640", phone = "4654654654"))
+        accountRepository.save(Account(name = "Test", document = "56468486402", phone = "4654654654"))
 
         mockMvc.perform(MockMvcRequestBuilders.get("/accounts"))
             .andExpect(MockMvcResultMatchers.status().isOk)
@@ -36,7 +39,7 @@ class AccountControllerTest {
 
     @Test
     fun `test find by id`() {
-        val account = accountRepository.save(Account(name = "Test", document = "5646848640", phone = "4654654654"))
+        val account = accountRepository.save(Account(name = "Test", document = "56468486402", phone = "4654654654"))
 
         mockMvc.perform(MockMvcRequestBuilders.get("/accounts/${account.id}"))
             .andExpect(MockMvcResultMatchers.status().isOk)
@@ -49,7 +52,7 @@ class AccountControllerTest {
 
     @Test
     fun `test create account`() {
-        val account = Account(name = "Test", document = "5646848640", phone = "4654654654")
+        val account = Account(name = "greater name", document = "56468486402", phone = "465465464")
         val json = ObjectMapper().writeValueAsString(account)
 
         mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
@@ -67,7 +70,7 @@ class AccountControllerTest {
 
     @Test
     fun `test update account`() {
-        val account = accountRepository.save(Account(name = "Test", document = "5646848640", phone = "4654654654"))
+        val account = accountRepository.save(Account(name = "Test", document = "56468486402", phone = "4654654654"))
             .copy(name = "Updated")
         val json = ObjectMapper().writeValueAsString(account)
 
@@ -89,7 +92,7 @@ class AccountControllerTest {
 
     @Test
     fun `test delete account`() {
-        val account = accountRepository.save(Account(name = "Test", document = "5646848640", phone = "4654654654"))
+        val account = accountRepository.save(Account(name = "Test", document = "56468486402", phone = "4654654654"))
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/accounts/${account.id}"))
             .andExpect(MockMvcResultMatchers.status().isNoContent)
@@ -98,4 +101,113 @@ class AccountControllerTest {
         val findById = accountRepository.findById(account.id!!)
         Assertions.assertFalse(findById.isPresent)
     }
+
+    @Test
+    fun `test create account validation error empty name`() {
+        val account = Account(name = "", document = "56468486402", phone = "4654654654")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[nome] nao pode estar em branco!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
+    @Test
+    fun `test create account validation error name should be 5 character `() {
+        val account = Account(name = "four", document = "56468486402", phone = "4654654654")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[nome] deve ter no minimo 5 caracteres!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
+    @Test
+    fun `test create account validation error empty document`() {
+        val account = Account(name = "greater name", document = "", phone = "4654654654")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[document] nao pode estar em branco!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
+    @Test
+    fun `test create account validation error document should be 11 character `() {
+        val account = Account(name = "Greater Name", document = "123", phone = "4654654654")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[document] deve ter 11 caracteres!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
+    @Test
+    fun `test create account validation error empty phone`() {
+        val account = Account(name = "greater name", document = "56468486402", phone = "")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[phone] nao pode estar em branco!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
+    @Test
+    fun `test create account validation error phone should be 9 character `() {
+        val account = Account(name = "Greater Name", document = "56468486402", phone = "4654654654")
+        val json = ObjectMapper().writeValueAsString(account)
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").isNumber)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").isString)
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+            .andExpect(MockMvcResultMatchers.jsonPath("\$.message").value("[phone] deve ter 9 caracteres!"))
+            .andDo(MockMvcResultHandlers.print())
+
+    }
+
 }
